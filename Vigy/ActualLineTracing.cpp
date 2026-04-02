@@ -55,8 +55,8 @@ int green_square(Mat img){
 		Mat imgthresh;
 		Mat imgwline;
 		Mat imgwgreen;
-		Scalar LowerGreen = Scalar (75, 46, 0);
-		Scalar HighGreen = Scalar (82, 255, 255);
+		Scalar LowerGreen = Scalar (72, 145, 105);
+		Scalar HighGreen = Scalar (78, 255, 171);
 		int leftgreen = 0;
 		int rightgreen = 0;
 		int top = 0;
@@ -82,11 +82,7 @@ int green_square(Mat img){
 		right = 0;
 		vector<vector<Point>> contours;
 		findContours(imgwgreen, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-		//drawContours(img,contours,-1,Scalar(0,0,255),10);
-		//printf("Num of contours : ");
-		//cout<<contours.size()<<endl;
-		
-		//cout<<"Cycle done"<<endl;
+	
 		imshow("imgwgreen", imgwgreen);
 	if(contours.size() != 0){
 		
@@ -110,11 +106,6 @@ int green_square(Mat img){
 					int thickness = 1;
 					Scalar color(255, 255, 0);
 					circle(img, center, radius, color, thickness);
-					//Detect where black is
-					//cout<<(int)imgthresh.at<uchar>(Point(midpoint.x,midpoint.y-(bounding_rect.height/2 + 8)))<<endl;
-					//cout<<(int)imgthresh.at<uchar>(Point(midpoint.x-(bounding_rect.width/2 + 8),midpoint.y))<<endl;
-					//cout<<(int)imgthresh.at<uchar>(Point(midpoint.x+(bounding_rect.width/2 + 8),midpoint.y))<<endl;
-					//cout<<(int)imgthresh.at<uchar>(Point(midpoint.x,midpoint.y+(bounding_rect.height/2 + 8)))<<endl;
 					
 					Point topcenter(midpoint.x,midpoint.y-(bounding_rect.height/2 + 8));
 					int radiustop  = 2;
@@ -208,7 +199,7 @@ int centroid_adjust(Mat img){
 	threshold(imgthresh, imgthresh, 127, 255, THRESH_BINARY);
 	bitwise_not(imgthresh, imgwline);
 		
-	Point center(160,120);
+	Point center(newwidth/8,newheight/8);
 	Scalar color(255, 255, 0);
 	int radius  = 5, thickness = 1;
 	circle(img, center, radius, color, thickness);
@@ -248,25 +239,35 @@ int centroid_adjust(Mat img){
 			for(int i = 1; i < 159; i++){
 			if((int)imgwline.at<uchar>(Point((center.x + i),(center.y - l))) == 255){//Line on the right
 				Point center1((center.x + i),(center.y - l));
-				Scalar color1(0, 255, 0);
-				int radius1  = 2, thickness1 = 2;
-				circle(img, center1, radius1, color1, thickness1);
-				//imshow("img", img);
-				//cout<<"Line found at: " << center.x+i << "," << center.y+l<<endl;
-				cout<<"Line on right HEHEIDWHEDHUIEWHDHWEHD"<<endl;
-				return 1;
+				for(int t = 0; t < newwidth/2; t++){
+					if(imgwline.at<uchar>(Point((center.x + t), (center.y)))){//Ur off line rn not on a gap
+						Scalar color1(0, 255, 0);
+						int radius1  = 2, thickness1 = 2;
+						circle(img, center1, radius1, color1, thickness1);
+						//imshow("img", img);
+						//cout<<"Line found at: " << center.x+i << "," << center.y+l<<endl;
+						cout<<"Line on right HEHEIDWHEDHUIEWHDHWEHD"<<endl;
+						return 1;
+					}
+				}
+				return 100;//GAP
+				
 			}
 		}
 			for(int i = 1; i < 159; i++){
 				if((int)imgwline.at<uchar>(Point((center.x - i),(center.y - l))) == 255){//Line on the left
-					Point center2((center.x - i),(center.y - l));
-					Scalar color2(255, 0, 255);
-					int radius2  = 2, thickness2 = 2;
-					circle(img, center2, radius2, color2, thickness2);
-					//imshow("img", img);
-					//cout<<"Line found at: " << center.x-i << "," << center.y+l<<endl;
-					cout<<"Line on left HRUUIEHHFEWFUIEUIFHE"<<endl;
-					return 2;
+					for(int t = 0; t < newwidth/2; t++){
+						if(imgwline.at<uchar>(Point((center.x + t), (center.y)))){//Ur off line rn not on a gap
+							Point center2((center.x - i),(center.y - l));
+							Scalar color2(255, 0, 255);
+							int radius2  = 2, thickness2 = 2;
+							circle(img, center2, radius2, color2, thickness2);
+							//imshow("img", img);
+							//cout<<"Line found at: " << center.x-i << "," << center.y+l<<endl;
+							cout<<"Line on left HRUUIEHHFEWFUIEUIFHE"<<endl;
+							return 2;
+						}
+					return 100;//GAP
 				}	
 			}
 		}
@@ -280,28 +281,28 @@ int centroid_adjust(Mat img){
 void centroid_read(Mat img){
 	int centered = centroid_adjust(img);
 	if(centered == 1){//turn right
-		motor_speed[0] = 70;//left motor
+		motor_speed[0] = 30;//left motor
 		motor_speed[1] = -30;//right motor
 	}
 	else if(centered == 2){//turn left
 		motor_speed[0] = -30;
-		motor_speed[1] = 70;
+		motor_speed[1] = 30;
 	}
 	else if(centered == 0){//straight
-		motor_speed[0] = 40;
-		motor_speed[1] = 40;
+		motor_speed[0] = 30;
+		motor_speed[1] = 30;
 	}
 	else if(centered == 11){//SHARP TURN RIGHT
 		sharpturn = 1;
-		motor_speed[0] = 70;
+		motor_speed[0] = 60;
 		motor_speed[1] = -30;
 	}
 	else if(centered == 12){//SHARP TURN LEFT
 		sharpturn = 1;
 		motor_speed[0] = -30;
-		motor_speed[1] = 70;
+		motor_speed[1] = 60;
 	}
-	else{
+	else{//GAPS
 		motor_speed[0] = 20;
 		motor_speed[1] = 20;
 	}
@@ -347,6 +348,16 @@ int main(){
 	
 	// data recieved from the pico, start sending and recieving values
 	char tx_buffer[40];
+	
+	char rx_buffer[256];
+	int rx_length = 0;
+	
+	
+	do{
+		rx_length = read(uart0_filestream, (void*)rx_buffer, 255);
+	}while(rx_length <= 0);
+	
+	
 	//int data[2];
 	while(true){
 		//Vid
@@ -366,6 +377,8 @@ int main(){
 		if(input == 'q'){
 			destroyAllWindows();
 			cam.stopVideo();
+			break;
+			
 		}
 		else if(input == ' '){
 			stopmotor = 1;
@@ -396,16 +409,17 @@ int main(){
 		if(doublegren == 1){
 			cout<<"doublegreen"<<endl;
 			doublegren = 0;
-			motor_speed[0] = 90;
+			motor_speed[0] = 40;
 			motor_speed[1] = -20;
 			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			//while(centroid_adjust !=  )
 			this_thread::sleep_for(1500ms);
 		}
 		else if(rightgren == 1){
 			cout<<"rightgreen"<<endl;
 			rightgren = 0;
-			motor_speed[0] = 90;
+			motor_speed[0] = 40;
 			motor_speed[1] = -20;
 			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
@@ -415,7 +429,7 @@ int main(){
 			cout<<"leftgreen"<<endl;
 			leftgren = 0;
 			motor_speed[0] = -20;
-			motor_speed[1] = 90;
+			motor_speed[1] = 40;
 			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 			this_thread::sleep_for(100ms);
@@ -434,6 +448,7 @@ int main(){
 		cout << "Left Motor: " <<  motor_speed[0] << endl;
 		cout << "Right Motor: " <<  motor_speed[1] << endl;
 		cout << "Sharp: " <<  sharpturn << endl;
+		
 		sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 		write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 		if(sharpturn == 1){
@@ -442,6 +457,8 @@ int main(){
 		}
 		
 	}
+	
+
 	
 	return 0;
 }
