@@ -235,47 +235,52 @@ int centroid_adjust(Mat img){
 		}
 	}
 		else{
-		for(int l = 0; l < 150; l++){
-			for(int i = 1; i < 159; i++){
-			if((int)imgwline.at<uchar>(Point((center.x + i),(center.y - l))) == 255){//Line on the right
-				Point center1((center.x + i),(center.y - l));
-				for(int t = 0; t < newwidth/2; t++){
-					if(imgwline.at<uchar>(Point((center.x + t), (center.y)))){//Ur off line rn not on a gap
-						Scalar color1(0, 255, 0);
-						int radius1  = 2, thickness1 = 2;
-						circle(img, center1, radius1, color1, thickness1);
-						//imshow("img", img);
-						//cout<<"Line found at: " << center.x+i << "," << center.y+l<<endl;
-						cout<<"Line on right HEHEIDWHEDHUIEWHDHWEHD"<<endl;
-						return 1;
+			for(int l = 0; l < 150; l++){
+				for(int i = 1; i < 159; i++){
+					if((int)imgwline.at<uchar>(Point((center.x + i),(center.y - l))) == 255){//Line on the right
+						Point center1((center.x + i),(center.y - l));
+						for(int t = 0; t < newwidth/2; t++){
+							if(imgwline.at<uchar>(Point((center.x + t), (0))) != 255){//Ur off line rn not on a gap
+								Scalar color1(0, 255, 0);
+								int radius1  = 2, thickness1 = 2;
+								circle(img, center1, radius1, color1, thickness1);
+								//imshow("img", img);
+								//cout<<"Line found at: " << center.x+i << "," << center.y+l<<endl;
+								cout<<"Line on right HEHEIDWHEDHUIEWHDHWEHD"<<endl;
+								return 1;
+							}
+							else{
+								return 100;//GAP
+							}
+						}
+						
+						
 					}
 				}
-				return 100;//GAP
-				
-			}
-		}
-			for(int i = 1; i < 159; i++){
-				if((int)imgwline.at<uchar>(Point((center.x - i),(center.y - l))) == 255){//Line on the left
-					for(int t = 0; t < newwidth/2; t++){
-						if(imgwline.at<uchar>(Point((center.x + t), (center.y)))){//Ur off line rn not on a gap
-							Point center2((center.x - i),(center.y - l));
-							Scalar color2(255, 0, 255);
-							int radius2  = 2, thickness2 = 2;
-							circle(img, center2, radius2, color2, thickness2);
-							//imshow("img", img);
-							//cout<<"Line found at: " << center.x-i << "," << center.y+l<<endl;
-							cout<<"Line on left HRUUIEHHFEWFUIEUIFHE"<<endl;
-							return 2;
-						}
-					return 100;//GAP
-				}	
+				for(int i = 1; i < 159; i++){
+					if((int)imgwline.at<uchar>(Point((center.x - i),(center.y - l))) == 255){//Line on the left
+						for(int t = 0; t < newwidth/2; t++){
+							if(imgwline.at<uchar>(Point((center.x + t), (0))) != 255){//Ur off line rn not on a gap
+								Point center2((center.x - i),(center.y - l));
+								Scalar color2(255, 0, 255);
+								int radius2  = 2, thickness2 = 2;
+								circle(img, center2, radius2, color2, thickness2);
+								//imshow("img", img);
+								//cout<<"Line found at: " << center.x-i << "," << center.y+l<<endl;
+								cout<<"Line on left HRUUIEHHFEWFUIEUIFHE"<<endl;
+								return 2;
+							}
+							else{
+								return 100;//GAP
+							}
+					}	
+				}
 			}
 		}
 	}
 	cout<<"Line not found"<<endl;
 	return 100;
 }
-
 
 
 void centroid_read(Mat img){
@@ -289,18 +294,18 @@ void centroid_read(Mat img){
 		motor_speed[1] = 30;
 	}
 	else if(centered == 0){//straight
-		motor_speed[0] = 30;
-		motor_speed[1] = 30;
+		motor_speed[0] = 20;
+		motor_speed[1] = 20;
 	}
 	else if(centered == 11){//SHARP TURN RIGHT
 		sharpturn = 1;
-		motor_speed[0] = 60;
-		motor_speed[1] = -30;
+		motor_speed[0] = 80;
+		motor_speed[1] = -40;
 	}
 	else if(centered == 12){//SHARP TURN LEFT
 		sharpturn = 1;
-		motor_speed[0] = -30;
-		motor_speed[1] = 60;
+		motor_speed[0] = -40;
+		motor_speed[1] = 80;
 	}
 	else{//GAPS
 		motor_speed[0] = 20;
@@ -393,6 +398,7 @@ int main(){
 		write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 		
 		//Data transfer
+		/*
 		green_square(img);
 		if(leftgren == 1 || rightgren == 1){
 			leftgren = 0;
@@ -434,6 +440,57 @@ int main(){
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 			this_thread::sleep_for(100ms);
 		}
+		*/
+		green_square(img);
+		if(leftgren == 1 || rightgren == 1){
+			leftgren = 0;
+			rightgren = 0;
+			motor_speed[0] = 40;
+			motor_speed[1] = 40;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(100ms);
+			green_square(img);
+		}
+		
+		///cout<<"Double Green: "<<doublegren<<endl;
+		if(doublegren == 1){
+			cout<<"doublegreen"<<endl;
+			doublegren = 0;
+			motor_speed[0] = 40;
+			motor_speed[1] = -20;
+			this_thread::sleep_for(800ms);//avoid detecting another line
+			while(centroid_adjust(img) != 0){//While its not on a straight line 
+				motor_speed[0] = 40;
+				motor_speed[1] = -20;
+				sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+				write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+				this_thread::sleep_for(500ms);
+			}
+		}
+		else if(rightgren == 1){
+			cout<<"rightgreen"<<endl;
+			rightgren = 0;
+			while(centroid_adjust(img) != 0){//While its not on a straight line 
+				motor_speed[0] = 40;
+				motor_speed[1] = -20;
+				sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+				write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+				this_thread::sleep_for(100ms);
+			}
+		}
+		else if(leftgren == 1){
+			cout<<"leftgreen"<<endl;
+			leftgren = 0;
+			while(centroid_adjust(img) != 0){//While its not on a straight line 
+				motor_speed[0] = -20;
+				motor_speed[1] = 40;
+				sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+				write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+				this_thread::sleep_for(100ms);
+			}
+		}
+		
 		centroid_read(img);
 		
 		imshow("img", img);
