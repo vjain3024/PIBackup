@@ -87,10 +87,11 @@ int green_square(Mat img){
 	if(contours.size() != 0){
 		
 			for(auto& cnt : contours){
-				//cout << contourArea(cnt) << endl;
+				cout << contourArea(cnt) << endl;
+				cout << "COUNTOR AREA!!!!" << endl;
 				Rect br = boundingRect(cnt);
 				//cout << br.height/(float)br.width << endl;
-				if(contourArea(cnt) < 1000|| contourArea(cnt) > 6000){
+				if(contourArea(cnt) < 1000|| contourArea(cnt) > 13000){
 					continue;
 				}
 				else{
@@ -294,8 +295,8 @@ void centroid_read(Mat img){
 		motor_speed[1] = 30;
 	}
 	else if(centered == 0){//straight
-		motor_speed[0] = 20;
-		motor_speed[1] = 20;
+		motor_speed[0] = 40;
+		motor_speed[1] = 40;
 	}
 	else if(centered == 11){//SHARP TURN RIGHT
 		sharpturn = 1;
@@ -398,7 +399,7 @@ int main(){
 		write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 		
 		//Data transfer
-		/*
+		
 		green_square(img);
 		if(leftgren == 1 || rightgren == 1){
 			leftgren = 0;
@@ -440,16 +441,21 @@ int main(){
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 			this_thread::sleep_for(100ms);
 		}
-		*/
+		/*
 		green_square(img);
 		if(leftgren == 1 || rightgren == 1){
 			leftgren = 0;
 			rightgren = 0;
+			motor_speed[0] = 0;
+			motor_speed[1] = 0;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(1000ms);
 			motor_speed[0] = 40;
 			motor_speed[1] = 40;
 			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
-			this_thread::sleep_for(100ms);
+			this_thread::sleep_for(950ms);
 			green_square(img);
 		}
 		
@@ -459,6 +465,8 @@ int main(){
 			doublegren = 0;
 			motor_speed[0] = 40;
 			motor_speed[1] = -20;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 			this_thread::sleep_for(800ms);//avoid detecting another line
 			while(centroid_adjust(img) != 0){//While its not on a straight line 
 				motor_speed[0] = 40;
@@ -471,25 +479,49 @@ int main(){
 		else if(rightgren == 1){
 			cout<<"rightgreen"<<endl;
 			rightgren = 0;
-			while(centroid_adjust(img) != 0){//While its not on a straight line 
+			motor_speed[0] = 40;
+			motor_speed[1] = -20;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(300ms);
+			do{
+				if(!cam.getVideoFrame(img, 1000)){
+					cout << "CAM ERROR" << endl;
+					while(1);
+				}
 				motor_speed[0] = 40;
 				motor_speed[1] = -20;
 				sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 				write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 				this_thread::sleep_for(100ms);
-			}
+			}while(centroid_adjust(img) != 0) ;//While its not on a straight line 
 		}
 		else if(leftgren == 1){
 			cout<<"leftgreen"<<endl;
 			leftgren = 0;
-			while(centroid_adjust(img) != 0){//While its not on a straight line 
-				motor_speed[0] = -20;
-				motor_speed[1] = 40;
+			motor_speed[0] = 0;
+			motor_speed[1] = 20;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(150ms);
+			int val;
+			do{//While its not on a straight line 
+				if(!cam.getVideoFrame(img, 1000)){
+					cout << "CAM ERROR" << endl;
+					while(1);
+				}
+				motor_speed[0] = 0;
+				motor_speed[1] = 20;
 				sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 				write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
-				this_thread::sleep_for(100ms);
+				this_thread::sleep_for(20ms);
+				val = centroid_adjust(img);
+				printf("\nCCentroid Adjust retuurned %5d\n", val);
+				
 			}
+			while(val != 0);
 		}
+		*/
 		
 		centroid_read(img);
 		
