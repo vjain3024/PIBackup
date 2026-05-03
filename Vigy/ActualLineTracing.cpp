@@ -55,8 +55,8 @@ int green_square(Mat img){
 		Mat imgthresh;
 		Mat imgwline;
 		Mat imgwgreen;
-		Scalar LowerGreen = Scalar (72, 145, 105);
-		Scalar HighGreen = Scalar (78, 255, 171);
+		Scalar LowerGreen = Scalar (78, 178, 110);
+		Scalar HighGreen = Scalar (81, 255, 200);
 		int leftgreen = 0;
 		int rightgreen = 0;
 		int top = 0;
@@ -66,7 +66,7 @@ int green_square(Mat img){
 		Point midpoint;
 		cvtColor(img, imgthresh,COLOR_BGR2GRAY);
 		GaussianBlur(imgthresh, imgthresh, Size(11,11), 0 );
-		threshold(imgthresh, imgthresh, 127, 255, THRESH_BINARY);
+		threshold(imgthresh, imgthresh, 140, 255, THRESH_BINARY);
 		bitwise_not(imgthresh, imgwline);
 		
 		cvtColor(img, imgwgreen,COLOR_BGR2HSV);
@@ -91,7 +91,7 @@ int green_square(Mat img){
 				cout << "COUNTOR AREA!!!!" << endl;
 				Rect br = boundingRect(cnt);
 				//cout << br.height/(float)br.width << endl;
-				if(contourArea(cnt) < 1000|| contourArea(cnt) > 13000){
+				if(contourArea(cnt) < 10000|| contourArea(cnt) > 15500){
 					continue;
 				}
 				else{
@@ -402,14 +402,21 @@ int main(){
 		
 		green_square(img);
 		if(leftgren == 1 || rightgren == 1){
-			leftgren = 0;
-			rightgren = 0;
-			motor_speed[0] = 40;
-			motor_speed[1] = 40;
+			//leftgren = 0;
+			//rightgren = 0;
+			cout<<"Detected a Green"<<endl;
+			motor_speed[0] = 0;
+			motor_speed[1] = 0;
 			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
-			this_thread::sleep_for(100ms);
-			green_square(img);
+			this_thread::sleep_for(5000ms);
+			/*motor_speed[0] = 20;
+			motor_speed[1] =20;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(850ms);
+			*/
+			//green_square(img);
 		}
 		
 		///cout<<"Double Green: "<<doublegren<<endl;
@@ -422,24 +429,88 @@ int main(){
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 			//while(centroid_adjust !=  )
 			this_thread::sleep_for(1500ms);
+			if(!cam.getVideoFrame(img, 1000)){
+				cout << "CAM ERROR" << endl;
+				while(1);
+			}
+			
+			// image is fine...
+			resize(img,img,Size(newwidth/4,newheight/4));
+			flip(img,img,-1);
 		}
 		else if(rightgren == 1){
 			cout<<"rightgreen"<<endl;
 			rightgren = 0;
-			motor_speed[0] = 40;
-			motor_speed[1] = -20;
+			
+					
+			/*motor_speed[0] = 0;
+			motor_speed[1] = 0;
 			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
-			this_thread::sleep_for(100ms);
+			this_thread::sleep_for(1500ms);
+			*/
+			
+			
+			motor_speed[0] = 40;
+			motor_speed[1] = 0;
+			cout<<motor_speed[0]<<endl;
+			cout<<motor_speed[1]<<endl;
+			cout<<"TURNING RIGHT!!!!!!!!!!!!!"<<endl;
+
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(3000ms);
+			/*motor_speed[0] = 0;
+			motor_speed[1] = 0;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(1000ms);
+			*/
+			if(!cam.getVideoFrame(img, 1000)){
+				cout << "CAM ERROR" << endl;
+				while(1);
+			}
+			
+			// image is fine...
+			resize(img,img,Size(newwidth/4,newheight/4));
+			flip(img,img,-1);
+			
+			cout << "DONE GREEN      RIGHT          DONE GREEN" << endl;
 		}
 		else if(leftgren == 1){
 			cout<<"leftgreen"<<endl;
 			leftgren = 0;
-			motor_speed[0] = -20;
+			
+			/*
+			motor_speed[0] = 0;
+			motor_speed[1] = 0;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(15000ms);
+			*/
+			
+			motor_speed[0] = 0;
 			motor_speed[1] = 40;
 			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
-			this_thread::sleep_for(100ms);
+			this_thread::sleep_for(3000ms);
+			/*motor_speed[0] = 0;
+			motor_speed[1] = 0;
+			sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
+			write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
+			this_thread::sleep_for(1000ms);
+			*/
+			if(!cam.getVideoFrame(img, 1000)){
+				cout << "CAM ERROR" << endl;
+				while(1);
+			}
+			
+			// image is fine...
+			resize(img,img,Size(newwidth/4,newheight/4));
+			flip(img,img,-1);
+			
+			cout << "DONE GREEN      LEFT               DONE GREEN" << endl;
+			
 		}
 		/*
 		green_square(img);
@@ -523,6 +594,7 @@ int main(){
 		}
 		*/
 		
+		
 		centroid_read(img);
 		
 		imshow("img", img);
@@ -541,7 +613,7 @@ int main(){
 		sprintf(tx_buffer, "[%d,%d]", motor_speed[0], motor_speed[1]); 
 		write(uart0_filestream, &tx_buffer[0], strlen(tx_buffer));
 		if(sharpturn == 1){
-			this_thread::sleep_for(200ms);
+			//this_thread::sleep_for(50ms);
 			sharpturn = 0;
 		}
 		
