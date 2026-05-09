@@ -309,8 +309,8 @@ void centroid_read(Mat img){
 		motor_speed[1] = 80;
 	}
 	else{//GAPS
-		motor_speed[0] = 20;
-		motor_speed[1] = 20;
+		motor_speed[0] = 35;
+		motor_speed[1] = 35;
 	}
 }
 
